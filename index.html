@@ -37,28 +37,31 @@
         // For public hosting, we MUST provide a default/placeholder config.
         let firebaseConfig = {
             // ===================================================================
-// index.html around line 40
-let firebaseConfig = {
-    // ===================================================================
-    // !!! PASTE YOUR FIREBASE CONFIGURATION HERE !!!
-    // ===================================================================
-    apiKey: "AIzaSyAK1umts0wkVAkCWqtQ_04DQcto78jbZaE", 
-    authDomain: "flight-sim-leaderboard.firebaseapp.com",
-    projectId: "flight-sim-leaderboard",
-    storageBucket: "flight-sim-leaderboard.firebasestorage.app", // <--- Don't skip this one!
-    messagingSenderId: "1045910945297", // <--- Don't skip this one!
-    appId: "1:1045910945297:web:39417042ebdf9eda0bbbb0"
-}; 
-// ...
-const ADMIN_UID = "7QmxyVpRYmPWmSNiBQtYRIit7wh1";
+            // !!! PASTE YOUR FIREBASE CONFIGURATION HERE !!!
+            // !!! REPLACE ALL VALUES STARTING WITH "REPLACE_WITH..."  !!!
+            // ===================================================================
+      // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAK1umts0wkVAkCWqtQ_04DQcto78jbZaE",
+  authDomain: "flight-sim-leaderboard.firebaseapp.com",
+  projectId: "flight-sim-leaderboard",
+  storageBucket: "flight-sim-leaderboard.firebasestorage.app",
+  messagingSenderId: "1045910945297",
+  appId: "1:1045910945297:web:39417042ebdf9eda0bbbb0"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
         }; 
         let appId = 'flightsim-leaderboard-public'; // Default public App ID
         let initialAuthToken = null; // Custom tokens are not available in public deployment
-
-        // CRITICAL: Replace this with YOUR user ID (found in the footer when you load the app)
-        // ONLY the user with this ID will be able to access the Admin Panel and WRITE data.
-        const ADMIN_UID = "7QmxyVpRYmPWmSNiBQtYRIit7wh1"; 
         
+        // Removed ADMIN_UID constant for temporary stabilization.
 
         // CRITICAL FIX: Check if environment variables are present and override the dummies (for Canvas use)
         if (typeof __firebase_config !== 'undefined' && JSON.parse(__firebase_config).projectId) {
@@ -102,7 +105,7 @@ const ADMIN_UID = "7QmxyVpRYmPWmSNiBQtYRIit7wh1";
             // Ensure config is not empty, which causes the 'loading' loop
             if (!config || !config.projectId || config.projectId.includes("REPLACE_WITH")) {
                  console.error("FIREBASE ERROR: Configuration missing. Please replace placeholder values in the code.");
-                 // Throwing an error here prevents an infinite loop, but we will still show the spinner.
+                 // Returning null prevents a crash but keeps the UI waiting
                  return null; 
             }
             return window.firebase.initializeApp(config);
@@ -633,8 +636,9 @@ const ADMIN_UID = "7QmxyVpRYmPWmSNiBQtYRIit7wh1";
             );
         };
         
-        // --- Admin Login Wrapper ---
+        // --- Admin Login Wrapper (Temporary Password Check) ---
         const AdminLogin = ({ onLogin }) => {
+            const ADMIN_PASSWORD = "AngleofAttack";
             const [password, setPassword] = useState('');
             const [error, setError] = useState('');
 
@@ -677,25 +681,12 @@ const ADMIN_UID = "7QmxyVpRYmPWmSNiBQtYRIit7wh1";
         const AdminView = (props) => {
             const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
             
-            // Reverting to the simpler password check, since Firebase UID is difficult 
-            // to obtain when the app is failing to load/authenticate
             if (!isAdminLoggedIn) {
+                // Temporary simple password lock
                 return <AdminLogin onLogin={setIsAdminLoggedIn} />;
             }
-            // Add a check here that only allows the AdminViewContent if the UID matches
-            const { userId, loading } = props;
-
-            if (ADMIN_UID !== "REPLACE_WITH_YOUR_FIREBASE_USER_ID_FOR_ADMIN_ACCESS" && userId !== ADMIN_UID) {
-                return (
-                    <div className="w-full max-w-md p-8 bg-red-900/50 backdrop-blur-sm rounded-xl shadow-2xl text-white space-y-6">
-                        <h2 className="text-3xl font-extrabold text-red-300 text-center">Admin Access Denied</h2>
-                        <p className="text-gray-300 text-center">
-                            This panel is restricted to the specific Admin UID defined in the code.
-                        </p>
-                    </div>
-                );
-            }
-
+            
+            // If logged in, show the content.
             return <AdminViewContent {...props} />;
         };
 
@@ -745,8 +736,12 @@ const ADMIN_UID = "7QmxyVpRYmPWmSNiBQtYRIit7wh1";
 
                     {/* Main Content */}
                     <main className="w-full flex justify-center">
-                        {loading && <LoadingSpinner />}
-                        {!loading && (
+                        {/* Display error message if configuration is missing */}
+                        {!loading && firebaseConfig.projectId.includes("REPLACE_WITH") ? (
+                            <LeaderboardsView students={[]} scores={[]} challenges={[]} loading={true} /> // Renders the config error box
+                        ) : loading ? (
+                            <LoadingSpinner />
+                        ) : (
                             view === 'leaderboard' ? (
                                 <LeaderboardsView
                                     students={students}
