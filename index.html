@@ -37,22 +37,27 @@
         // For public hosting, we MUST provide a default/placeholder config.
         let firebaseConfig = {
             // ===================================================================
-            // !!! PASTE YOUR FIREBASE CONFIGURATION HERE !!!
-            // !!! REPLACE ALL VALUES STARTING WITH "REPLACE_WITH..."  !!!
-            // ===================================================================
-            apiKey: "AIzaSyAK1umts0wkVAkCWqtQ_04DQcto78jbZaE",
-            authDomain: "flight-sim-leaderboard.firebaseapp.com",
-            projectId: "flight-sim-leaderboard",
-            storageBucket: "flight-sim-leaderboard.firebasestorage.app",
-            messagingSenderId: "1045910945297",
-            appId: "1:1045910945297:web:39417042ebdf9eda0bbbb0"
+// index.html around line 40
+let firebaseConfig = {
+    // ===================================================================
+    // !!! PASTE YOUR FIREBASE CONFIGURATION HERE !!!
+    // ===================================================================
+    apiKey: "AIzaSyAK1umts0wkVAkCWqtQ_04DQcto78jbZaE", 
+    authDomain: "flight-sim-leaderboard.firebaseapp.com",
+    projectId: "flight-sim-leaderboard",
+    storageBucket: "flight-sim-leaderboard.firebasestorage.app", // <--- Don't skip this one!
+    messagingSenderId: "1045910945297", // <--- Don't skip this one!
+    appId: "1:1045910945297:web:39417042ebdf9eda0bbbb0"
+}; 
+// ...
+const ADMIN_UID = "7QmxyVpRYmPWmSNiBQtYRIit7wh1";
         }; 
         let appId = 'flightsim-leaderboard-public'; // Default public App ID
         let initialAuthToken = null; // Custom tokens are not available in public deployment
 
         // CRITICAL: Replace this with YOUR user ID (found in the footer when you load the app)
         // ONLY the user with this ID will be able to access the Admin Panel and WRITE data.
-        const ADMIN_UID = "REPLACE_WITH_YOUR_FIREBASE_USER_ID_FOR_ADMIN_ACCESS"; 
+        const ADMIN_UID = "7QmxyVpRYmPWmSNiBQtYRIit7wh1"; 
         
 
         // CRITICAL FIX: Check if environment variables are present and override the dummies (for Canvas use)
