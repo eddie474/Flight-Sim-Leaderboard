@@ -40,26 +40,20 @@
             // !!! PASTE YOUR FIREBASE CONFIGURATION HERE !!!
             // !!! REPLACE ALL VALUES STARTING WITH "REPLACE_WITH..."  !!!
             // ===================================================================
-          // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyAK1umts0wkVAkCWqtQ_04DQcto78jbZaE",
-  authDomain: "flight-sim-leaderboard.firebaseapp.com",
-  projectId: "flight-sim-leaderboard",
-  storageBucket: "flight-sim-leaderboard.firebasestorage.app",
-  messagingSenderId: "1045910945297",
-  appId: "1:1045910945297:web:39417042ebdf9eda0bbbb0"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+            apiKey: "AIzaSyAK1umts0wkVAkCWqtQ_04DQcto78jbZaE",
+            authDomain: "flight-sim-leaderboard.firebaseapp.com",
+            projectId: "flight-sim-leaderboard",
+            storageBucket: "flight-sim-leaderboard.firebasestorage.app",
+            messagingSenderId: "1045910945297",
+            appId: "1:1045910945297:web:39417042ebdf9eda0bbbb0"
         }; 
         let appId = 'flightsim-leaderboard-public'; // Default public App ID
         let initialAuthToken = null; // Custom tokens are not available in public deployment
+
+        // CRITICAL: Replace this with YOUR user ID (found in the footer when you load the app)
+        // ONLY the user with this ID will be able to access the Admin Panel and WRITE data.
+        const ADMIN_UID = "REPLACE_WITH_YOUR_FIREBASE_USER_ID_FOR_ADMIN_ACCESS"; 
+        
 
         // CRITICAL FIX: Check if environment variables are present and override the dummies (for Canvas use)
         if (typeof __firebase_config !== 'undefined' && JSON.parse(__firebase_config).projectId) {
@@ -67,9 +61,6 @@ const app = initializeApp(firebaseConfig);
             appId = typeof __app_id !== 'undefined' ? __app_id : 'flightsim-leaderboard-default';
             initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         }
-
-        // ADMIN ACCESS PASSWORD: Change this to secure your admin panel.
-        const ADMIN_PASSWORD = "AngleofAttack"; 
 
         const { useState, useEffect, useMemo } = React;
 
@@ -681,8 +672,23 @@ const app = initializeApp(firebaseConfig);
         const AdminView = (props) => {
             const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
             
+            // Reverting to the simpler password check, since Firebase UID is difficult 
+            // to obtain when the app is failing to load/authenticate
             if (!isAdminLoggedIn) {
                 return <AdminLogin onLogin={setIsAdminLoggedIn} />;
+            }
+            // Add a check here that only allows the AdminViewContent if the UID matches
+            const { userId, loading } = props;
+
+            if (ADMIN_UID !== "REPLACE_WITH_YOUR_FIREBASE_USER_ID_FOR_ADMIN_ACCESS" && userId !== ADMIN_UID) {
+                return (
+                    <div className="w-full max-w-md p-8 bg-red-900/50 backdrop-blur-sm rounded-xl shadow-2xl text-white space-y-6">
+                        <h2 className="text-3xl font-extrabold text-red-300 text-center">Admin Access Denied</h2>
+                        <p className="text-gray-300 text-center">
+                            This panel is restricted to the specific Admin UID defined in the code.
+                        </p>
+                    </div>
+                );
             }
 
             return <AdminViewContent {...props} />;
