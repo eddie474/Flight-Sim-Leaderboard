@@ -330,9 +330,10 @@
         const LeaderboardsView = ({ students, scores, challenges, loading }) => {
             return (
                 <div className="w-full max-w-7xl p-4 md:p-8 bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-2xl">
+                    {/* FIXED: Removed "Overview" and ensured clean text rendering */}
                     <h2 className="text-3xl font-extrabold mb-8 text-emerald-400 border-b border-emerald-500/50 pb-2 flex items-center justify-center">
                         <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19V6l12-3v14M9 19a2 2 0 002 2h2a2 2 0 002-2M9 19c0 1.105.9 2 2 2h2c1.105 0 2-.895 2-2M9 19v-6M15 19v-6"></path></svg>
-                        Ground Trainer Leaderboards Overview
+                        Ground Trainer Leaderboards
                     </h2>
 
                     {loading ? <LoadingSpinner /> : (
