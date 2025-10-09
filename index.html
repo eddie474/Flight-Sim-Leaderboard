@@ -33,10 +33,29 @@
     <script type="text/babel">
         // --- 1. Global Constants and Utilities ---
         
-        // Global variables provided by the environment (required for Firestore setup)
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'flightsim-leaderboard-default';
+        // These variables are provided by the Canvas environment when running locally.
+        // For public hosting, we MUST provide a default/placeholder config.
+        let firebaseConfig = {
+            // ===================================================================
+            // !!! PASTE YOUR FIREBASE CONFIGURATION HERE !!!
+            // !!! REPLACE ALL VALUES STARTING WITH "REPLACE_WITH..."  !!!
+            // ===================================================================
+            apiKey: "AIzaSyAK1umts0wkVAkCWqtQ_04DQcto78jbZaE", 
+            authDomain: "flight-sim-leaderboard.firebaseapp.com",
+            projectId: "flight-sim-leaderboard",
+            storageBucket: "flight-sim-leaderboard.firebasestorage.app",
+            messagingSenderId: "1045910945297",
+            appId: "1:1045910945297:web:39417042ebdf9eda0bbbb0",
+        }; 
+        let appId = 'flightsim-leaderboard-public'; // Default public App ID
+        let initialAuthToken = null; // Custom tokens are not available in public deployment
+
+        // CRITICAL FIX: Check if environment variables are present and override the dummies (for Canvas use)
+        if (typeof __firebase_config !== 'undefined' && JSON.parse(__firebase_config).projectId) {
+            Object.assign(firebaseConfig, JSON.parse(__firebase_config));
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'flightsim-leaderboard-default';
+            initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        }
 
         // ADMIN ACCESS PASSWORD: Change this to secure your admin panel.
         const ADMIN_PASSWORD = "AngleofAttack"; 
@@ -73,6 +92,12 @@
             if (window.firebase.apps.length > 0) {
                 return window.firebase.app();
             }
+            // Ensure config is not empty, which causes the 'loading' loop
+            if (!config || !config.projectId || config.projectId.includes("REPLACE_WITH")) {
+                 console.error("FIREBASE ERROR: Configuration missing. Please replace placeholder values in the code.");
+                 // Throwing an error here prevents an infinite loop, but we will still show the spinner.
+                 return null; 
+            }
             return window.firebase.initializeApp(config);
         };
 
@@ -91,18 +116,25 @@
                 let app, currentAuth, currentDb;
                 try {
                     app = getAppInstance(firebaseConfig);
+                    if (!app) {
+                        setIsAuthReady(true); // Stop trying to load if config is bad
+                        return;
+                    }
+
                     currentAuth = app.auth();
                     currentDb = app.firestore();
                     setAuth(currentAuth);
                     setDb(currentDb);
                 } catch (error) {
                     console.error("Firebase Initialization Error:", error);
+                    setIsAuthReady(true);
                     return;
                 }
 
                 // Authentication and User ID setup
                 const authenticate = async () => {
                     try {
+                        // In public environment, always use anonymous sign-in or standard methods.
                         if (initialAuthToken) {
                             await currentAuth.signInWithCustomToken(initialAuthToken);
                         } else {
@@ -138,8 +170,13 @@
             const [loading, setLoading] = useState(true);
 
             useEffect(() => {
+                // Check if DB is initialized AND the user is signed in
                 if (!db || !userId) {
-                    if (db) console.log("Waiting for user ID to fetch data...");
+                    if (db && firebaseConfig.projectId.includes("REPLACE_WITH")) {
+                        // Special case: DB object exists, but config is bad
+                        setLoading(false); 
+                        return;
+                    }
                     return;
                 }
 
@@ -290,6 +327,18 @@
         }
 
         const LeaderboardsView = ({ students, scores, challenges, loading }) => {
+            // Check if we failed to initialize firebase (due to missing config)
+            if (!firebaseConfig.projectId || firebaseConfig.projectId.includes("REPLACE_WITH")) {
+                return (
+                    <div className="w-full max-w-7xl p-8 bg-red-900/50 backdrop-blur-sm rounded-xl shadow-2xl text-center">
+                        <h2 className="text-3xl font-extrabold mb-4 text-red-300">Configuration Error</h2>
+                        <p className="text-lg text-red-200">
+                            The Firebase configuration keys are missing. Please edit the **index.html** file around line 40 and replace the placeholder values with your actual Firebase project configuration (API Key, Project ID, etc.).
+                        </p>
+                    </div>
+                );
+            }
+
             return (
                 <div className="w-full max-w-7xl p-4 md:p-8 bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-2xl">
                     <h2 className="text-3xl font-extrabold mb-8 text-emerald-400 border-b border-emerald-500/50 pb-2 flex items-center justify-center">
@@ -431,144 +480,148 @@
                         Admin Panel - Tools
                     </h2>
 
-                    {message && (
-                        <div className="bg-green-600 p-3 rounded mb-4 text-center font-semibold animate-pulse">
-                            {message}
-                        </div>
+                    {loading ? <LoadingSpinner /> : (
+                        <>
+                            {message && (
+                                <div className="bg-green-600 p-3 rounded mb-4 text-center font-semibold animate-pulse">
+                                    {message}
+                                </div>
+                            )}
+
+                            {/* 1. Define New Challenge Section */}
+                            <div className="border border-gray-600 p-4 rounded-lg bg-gray-700/30">
+                                <h3 className="text-xl font-bold mb-3 text-blue-300">1. Define New Landing Challenge</h3>
+                                <form onSubmit={handleAddChallenge} className="flex flex-col gap-4">
+                                    <label htmlFor="category-select-admin" className="block text-sm font-medium text-gray-400">Select Category</label>
+                                    <select
+                                        id="category-select-admin"
+                                        value={newChallengeCategory}
+                                        onChange={(e) => setNewChallengeCategory(e.target.value)}
+                                        className="p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-blue-500 focus:border-blue-500 text-white"
+                                        required
+                                        disabled={loading}
+                                    >
+                                        {categoryOptions}
+                                    </select>
+                                    <input
+                                        type="text"
+                                        placeholder="Challenge Name (e.g., Courchevel Landing)"
+                                        value={newChallengeName}
+                                        onChange={(e) => setNewChallengeName(e.target.value)}
+                                        className="p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-blue-500 focus:border-blue-500 text-white"
+                                        required
+                                        disabled={loading}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Airport Code (e.g., LFLJ)"
+                                        value={newChallengeAirport}
+                                        onChange={(e) => setNewChallengeAirport(e.target.value)}
+                                        className="p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-blue-500 focus:border-blue-500 text-white"
+                                        required
+                                        disabled={loading}
+                                    />
+                                    <button
+                                        type="submit"
+                                        className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md transition duration-150 shadow-md disabled:opacity-50"
+                                        disabled={loading || !newChallengeName.trim() || !newChallengeAirport.trim() || !newChallengeCategory}
+                                    >
+                                        Create Challenge
+                                    </button>
+                                </form>
+                            </div>
+
+                            {/* 2. Add Pilot Section */}
+                            <div className="border border-gray-600 p-4 rounded-lg bg-gray-700/30">
+                                <h3 className="text-xl font-bold mb-3 text-gray-200">2. Add New Pilot</h3>
+                                <form onSubmit={handleAddStudent} className="flex flex-col sm:flex-row gap-4">
+                                    <input
+                                        type="text"
+                                        placeholder="Student Name / Pilot Callsign"
+                                        value={newStudentName}
+                                        onChange={(e) => setNewStudentName(e.target.value)}
+                                        className="flex-grow p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-emerald-500 focus:border-emerald-500 text-white"
+                                        required
+                                        disabled={loading}
+                                    />
+                                    <button
+                                        type="submit"
+                                        className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-md transition duration-150 shadow-md disabled:opacity-50"
+                                        disabled={loading || !newStudentName.trim()}
+                                    >
+                                        Add Pilot
+                                    </button>
+                                </form>
+                            </div>
+
+                            {/* 3. Upload Score Section */}
+                            <div className="border border-gray-600 p-4 rounded-lg bg-gray-700/30">
+                                <h3 className="text-xl font-bold mb-3 text-gray-200">3. Upload New Landing Score</h3>
+                                <form onSubmit={handleAddScore} className="space-y-4">
+                                    {/* Challenge Selector */}
+                                    <div>
+                                        <label htmlFor="challenge-select" className="block text-sm font-medium text-gray-400 mb-1">Select Specific Challenge</label>
+                                        <select
+                                            id="challenge-select"
+                                            value={selectedChallengeId}
+                                            onChange={(e) => setSelectedChallengeId(e.target.value)}
+                                            className="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-blue-500 focus:border-blue-500 text-white"
+                                            required
+                                            disabled={loading || challenges.length === 0}
+                                        >
+                                            <option value="" disabled>-- Choose a challenge --</option>
+                                            {challenges.map(c => <option key={c.id} value={c.id}>{c.name} ({c.airport}) - {c.categoryName}</option>)}
+                                        </select>
+                                        {challenges.length === 0 && !loading && (
+                                            <p className="text-sm text-red-400 mt-2">No challenges defined. Please create one in Section 1.</p>
+                                        )}
+                                    </div>
+
+                                    {/* Pilot Selector */}
+                                    <div>
+                                        <label htmlFor="student-select" className="block text-sm font-medium text-gray-400 mb-1">Select Pilot</label>
+                                        <select
+                                            id="student-select"
+                                            value={selectedStudentId}
+                                            onChange={(e) => setSelectedStudentId(e.target.value)}
+                                            className="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-emerald-500 focus:border-emerald-500 text-white"
+                                            required
+                                            disabled={loading || students.length === 0}
+                                        >
+                                            <option value="" disabled>-- Choose a pilot --</option>
+                                            {studentOptions}
+                                        </select>
+                                        {students.length === 0 && !loading && (
+                                            <p className="text-sm text-red-400 mt-2">No pilots available. Please add a pilot in Section 2.</p>
+                                        )}
+                                    </div>
+
+                                    {/* Score Input */}
+                                    <div>
+                                        <label htmlFor="score-input" className="block text-sm font-medium text-gray-400 mb-1">Landing Score (e.g., 985000)</label>
+                                        <input
+                                            id="score-input"
+                                            type="number"
+                                            placeholder="Enter score"
+                                            value={newScore}
+                                            onChange={(e) => setNewScore(e.target.value)}
+                                            className="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-emerald-500 focus:border-emerald-500 text-white font-mono"
+                                            required
+                                            min="1"
+                                            disabled={loading || !selectedStudentId || !selectedChallengeId}
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        className="w-full px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-md transition duration-150 shadow-md disabled:opacity-50"
+                                        disabled={loading || !selectedStudentId || !selectedChallengeId || !newScore || parseInt(newScore) <= 0}
+                                    >
+                                        Submit Score
+                                    </button>
+                                </form>
+                            </div>
+                        </>
                     )}
-
-                    {/* 1. Define New Challenge Section */}
-                    <div className="border border-gray-600 p-4 rounded-lg bg-gray-700/30">
-                        <h3 className="text-xl font-bold mb-3 text-blue-300">1. Define New Landing Challenge</h3>
-                        <form onSubmit={handleAddChallenge} className="flex flex-col gap-4">
-                            <label htmlFor="category-select-admin" className="block text-sm font-medium text-gray-400">Select Category</label>
-                            <select
-                                id="category-select-admin"
-                                value={newChallengeCategory}
-                                onChange={(e) => setNewChallengeCategory(e.target.value)}
-                                className="p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-blue-500 focus:border-blue-500 text-white"
-                                required
-                                disabled={loading}
-                            >
-                                {categoryOptions}
-                            </select>
-                            <input
-                                type="text"
-                                placeholder="Challenge Name (e.g., Courchevel Landing)"
-                                value={newChallengeName}
-                                onChange={(e) => setNewChallengeName(e.target.value)}
-                                className="p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-blue-500 focus:border-blue-500 text-white"
-                                required
-                                disabled={loading}
-                            />
-                            <input
-                                type="text"
-                                placeholder="Airport Code (e.g., LFLJ)"
-                                value={newChallengeAirport}
-                                onChange={(e) => setNewChallengeAirport(e.target.value)}
-                                className="p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-blue-500 focus:border-blue-500 text-white"
-                                required
-                                disabled={loading}
-                            />
-                            <button
-                                type="submit"
-                                className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md transition duration-150 shadow-md disabled:opacity-50"
-                                disabled={loading || !newChallengeName.trim() || !newChallengeAirport.trim() || !newChallengeCategory}
-                            >
-                                Create Challenge
-                            </button>
-                        </form>
-                    </div>
-
-                    {/* 2. Add Pilot Section */}
-                    <div className="border border-gray-600 p-4 rounded-lg bg-gray-700/30">
-                        <h3 className="text-xl font-bold mb-3 text-gray-200">2. Add New Pilot</h3>
-                        <form onSubmit={handleAddStudent} className="flex flex-col sm:flex-row gap-4">
-                            <input
-                                type="text"
-                                placeholder="Student Name / Pilot Callsign"
-                                value={newStudentName}
-                                onChange={(e) => setNewStudentName(e.target.value)}
-                                className="flex-grow p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-emerald-500 focus:border-emerald-500 text-white"
-                                required
-                                disabled={loading}
-                            />
-                            <button
-                                type="submit"
-                                className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-md transition duration-150 shadow-md disabled:opacity-50"
-                                disabled={loading || !newStudentName.trim()}
-                            >
-                                Add Pilot
-                            </button>
-                        </form>
-                    </div>
-
-                    {/* 3. Upload Score Section */}
-                    <div className="border border-gray-600 p-4 rounded-lg bg-gray-700/30">
-                        <h3 className="text-xl font-bold mb-3 text-gray-200">3. Upload New Landing Score</h3>
-                        <form onSubmit={handleAddScore} className="space-y-4">
-                            {/* Challenge Selector */}
-                            <div>
-                                <label htmlFor="challenge-select" className="block text-sm font-medium text-gray-400 mb-1">Select Specific Challenge</label>
-                                <select
-                                    id="challenge-select"
-                                    value={selectedChallengeId}
-                                    onChange={(e) => setSelectedChallengeId(e.target.value)}
-                                    className="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-blue-500 focus:border-blue-500 text-white"
-                                    required
-                                    disabled={loading || challenges.length === 0}
-                                >
-                                    <option value="" disabled>-- Choose a challenge --</option>
-                                    {challenges.map(c => <option key={c.id} value={c.id}>{c.name} ({c.airport}) - {c.categoryName}</option>)}
-                                </select>
-                                {challenges.length === 0 && !loading && (
-                                    <p className="text-sm text-red-400 mt-2">No challenges defined. Please create one in Section 1.</p>
-                                )}
-                            </div>
-
-                            {/* Pilot Selector */}
-                            <div>
-                                <label htmlFor="student-select" className="block text-sm font-medium text-gray-400 mb-1">Select Pilot</label>
-                                <select
-                                    id="student-select"
-                                    value={selectedStudentId}
-                                    onChange={(e) => setSelectedStudentId(e.target.value)}
-                                    className="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-emerald-500 focus:border-emerald-500 text-white"
-                                    required
-                                    disabled={loading || students.length === 0}
-                                >
-                                    <option value="" disabled>-- Choose a pilot --</option>
-                                    {studentOptions}
-                                </select>
-                                {students.length === 0 && !loading && (
-                                    <p className="text-sm text-red-400 mt-2">No pilots available. Please add a pilot in Section 2.</p>
-                                )}
-                            </div>
-
-                            {/* Score Input */}
-                            <div>
-                                <label htmlFor="score-input" className="block text-sm font-medium text-gray-400 mb-1">Landing Score (e.g., 985000)</label>
-                                <input
-                                    id="score-input"
-                                    type="number"
-                                    placeholder="Enter score"
-                                    value={newScore}
-                                    onChange={(e) => setNewScore(e.target.value)}
-                                    className="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-emerald-500 focus:border-emerald-500 text-white font-mono"
-                                    required
-                                    min="1"
-                                    disabled={loading || !selectedStudentId || !selectedChallengeId}
-                                />
-                            </div>
-                            <button
-                                type="submit"
-                                className="w-full px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-md transition duration-150 shadow-md disabled:opacity-50"
-                                disabled={loading || !selectedStudentId || !selectedChallengeId || !newScore || parseInt(newScore) <= 0}
-                            >
-                                Submit Score
-                            </button>
-                        </form>
-                    </div>
                 </div>
             );
         };
@@ -616,10 +669,6 @@
         
         const AdminView = (props) => {
             const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
-
-            // If user changes from AdminView to Leaderboards and then back,
-            // we should not require re-login unless the session times out,
-            // but for simplicity in this client-side app, we'll maintain state.
             
             if (!isAdminLoggedIn) {
                 return <AdminLogin onLogin={setIsAdminLoggedIn} />;
@@ -697,9 +746,8 @@
 
                     {/* Footer / Debug Info */}
                     <footer className="mt-8 text-center text-xs text-gray-500 max-w-7xl">
-                        <p>Data stored publicly for this app ID: {appId}</p>
+                        <p>App ID: {appId}</p>
                         <p>Current User ID: {userId || 'Authenticating...'}</p>
-                        <p>Uses Firebase Firestore for real-time score updates.</p>
                     </footer>
                 </div>
             );
