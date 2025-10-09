@@ -14,12 +14,13 @@
     <!-- Custom Styles for Inter Font and Background -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0d1117; }
+        body { font-family: 'Inter', sans-serif; background-color: #0d1117; overflow: hidden; }
         #root {
             display: flex;
             min-height: 100vh;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
         }
         /* Custom scrollbar for aesthetics */
         ::-webkit-scrollbar { width: 6px; }
@@ -33,12 +34,10 @@
     <script type="text/babel">
         // --- 1. Global Constants and Utilities ---
         
-        // These variables are provided by the Canvas environment when running locally.
-        // For public hosting, we MUST provide a default/placeholder config.
+        // Firebase Configuration (KEYS PASTE AREA)
         let firebaseConfig = {
             // ===================================================================
-            // !!! PASTE YOUR FIREBASE CONFIGURATION HERE !!!
-            // !!! REPLACE ALL VALUES STARTING WITH "REPLACE_WITH..."  !!!
+            // !!! YOUR FIREBASE CONFIGURATION IS HERE !!!
             // ===================================================================
             apiKey: "AIzaSyAK1umts0wkVAkCWqtQ_04DQcto78jbZaE",
             authDomain: "flight-sim-leaderboard.firebaseapp.com",
@@ -50,8 +49,6 @@
         let appId = 'flightsim-leaderboard-public'; // Default public App ID
         let initialAuthToken = null; // Custom tokens are not available in public deployment
         
-        // Removed ADMIN_UID constant for temporary stabilization.
-
         // CRITICAL FIX: Check if environment variables are present and override the dummies (for Canvas use)
         if (typeof __firebase_config !== 'undefined' && JSON.parse(__firebase_config).projectId) {
             Object.assign(firebaseConfig, JSON.parse(__firebase_config));
@@ -91,10 +88,9 @@
             if (window.firebase.apps.length > 0) {
                 return window.firebase.app();
             }
-            // Ensure config is not empty, which causes the 'loading' loop
+            // Check if config keys are valid before initializing
             if (!config || !config.projectId || config.projectId.includes("REPLACE_WITH")) {
-                 console.error("FIREBASE ERROR: Configuration missing. Please replace placeholder values in the code.");
-                 // Returning null prevents a crash but keeps the UI waiting
+                 console.error("FIREBASE ERROR: Configuration missing or invalid.");
                  return null; 
             }
             return window.firebase.initializeApp(config);
@@ -116,7 +112,7 @@
                 try {
                     app = getAppInstance(firebaseConfig);
                     if (!app) {
-                        setIsAuthReady(true); // Stop trying to load if config is bad
+                        setIsAuthReady(true);
                         return;
                     }
 
@@ -133,7 +129,6 @@
                 // Authentication and User ID setup
                 const authenticate = async () => {
                     try {
-                        // In public environment, always use anonymous sign-in or standard methods.
                         if (initialAuthToken) {
                             await currentAuth.signInWithCustomToken(initialAuthToken);
                         } else {
@@ -169,10 +164,8 @@
             const [loading, setLoading] = useState(true);
 
             useEffect(() => {
-                // Check if DB is initialized AND the user is signed in
                 if (!db || !userId) {
                     if (db && firebaseConfig.projectId.includes("REPLACE_WITH")) {
-                        // Special case: DB object exists, but config is bad
                         setLoading(false); 
                         return;
                     }
@@ -221,15 +214,12 @@
 
         const useCategoryLeaderboard = (students, scores, challenges, categoryId) => {
             return useMemo(() => {
-                // 1. Find all challenge IDs belonging to this category
                 const challengeIdsInThisCategory = challenges
                     .filter(c => c.categoryId === categoryId)
                     .map(c => c.id);
 
-                // 2. Filter scores relevant to these challenge IDs
                 const filteredScores = scores.filter(score => challengeIdsInThisCategory.includes(score.challengeId));
 
-                // 3. Find the highest score per student
                 const studentHighScores = filteredScores.reduce((acc, score) => {
                     if (score.studentId) {
                         if (!acc[score.studentId] || score.score > acc[score.studentId].score) {
@@ -243,7 +233,6 @@
                     return acc;
                 }, {});
 
-                // 4. Build the leaderboard, only including students with scores
                 const leaderboard = students.map(student => {
                     const highScoreData = studentHighScores[student.id] || { score: 0, timestamp: null };
                     return {
@@ -254,7 +243,6 @@
                     };
                 }).filter(item => item.highScore > 0); 
 
-                // 5. Sort the leaderboard (Highest score first, then newest timestamp)
                 leaderboard.sort((a, b) => {
                     if (b.highScore !== a.highScore) {
                         return b.highScore - a.highScore;
@@ -274,7 +262,6 @@
             const leaderboard = useCategoryLeaderboard(students, scores, challenges, category.id);
             const associatedChallenges = challenges.filter(c => c.categoryId === category.id);
             
-            // Limit challenge names shown in the footer for cleaner display
             const challengeList = associatedChallenges.map(c => c.name);
             const challengeDisplay = challengeList.length > 3 
                 ? `${challengeList.slice(0, 3).join(', ')} and ${challengeList.length - 3} more...` 
@@ -326,18 +313,7 @@
         }
 
         const LeaderboardsView = ({ students, scores, challenges, loading }) => {
-            // Check if we failed to initialize firebase (due to missing config)
-            if (!firebaseConfig.projectId || firebaseConfig.projectId.includes("REPLACE_WITH")) {
-                return (
-                    <div className="w-full max-w-7xl p-8 bg-red-900/50 backdrop-blur-sm rounded-xl shadow-2xl text-center">
-                        <h2 className="text-3xl font-extrabold mb-4 text-red-300">Configuration Error</h2>
-                        <p className="text-lg text-red-200">
-                            The Firebase configuration keys are missing. Please edit the **index.html** file around line 40 and replace the placeholder values with your actual Firebase project configuration (API Key, Project ID, etc.).
-                        </p>
-                    </div>
-                );
-            }
-
+            // Configuration Check is now handled outside, in App component
             return (
                 <div className="w-full max-w-7xl p-4 md:p-8 bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-2xl">
                     <h2 className="text-3xl font-extrabold mb-8 text-emerald-400 border-b border-emerald-500/50 pb-2 flex items-center justify-center">
@@ -365,7 +341,6 @@
         
         // --- Admin Content (The actual forms and logic) ---
         const AdminViewContent = ({ db, userId, students, challenges, loading }) => {
-            // State for forms
             const [newStudentName, setNewStudentName] = useState('');
             const [newChallengeCategory, setNewChallengeCategory] = useState(CATEGORIES[0].id);
             const [newChallengeName, setNewChallengeName] = useState('');
@@ -375,7 +350,6 @@
             const [selectedChallengeId, setSelectedChallengeId] = useState(challenges.length > 0 ? challenges[0].id : '');
             const [message, setMessage] = useState('');
 
-            // Update selectors when data loads
             useEffect(() => {
                 if (students.length > 0 && !selectedStudentId) {
                     setSelectedStudentId(students[0].id);
@@ -389,7 +363,6 @@
             const studentOptions = students.map(s => <option key={s.id} value={s.id}>{s.name}</option>);
             const categoryOptions = CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>);
 
-            // Admin Functions
             const handleAddChallenge = async (e) => {
                 e.preventDefault();
                 if (!db || !newChallengeName.trim() || !newChallengeAirport.trim() || !newChallengeCategory) return;
@@ -682,6 +655,7 @@
 
         const App = () => {
             const [view, setView] = useState('leaderboard'); 
+            const [scaleFactor, setScaleFactor] = useState(1); // New state for 16:9 scaling
             
             // Centralized Firebase setup via custom hook
             const { db, auth, userId, isAuthReady } = useFirebaseSetup();
@@ -690,71 +664,116 @@
             const { students, scores, challenges, loading: dataLoading } = useFirestoreData(db, auth, userId);
 
             const loading = !isAuthReady || dataLoading;
+            
+            // --- 16:9 Scaling Logic ---
+            useEffect(() => {
+                const contentW = 1600; // Reference 16
+                const contentH = 900;  // Reference 9
+                const verticalMargin = 120; // Extra height for header/footer/spacing
+
+                const calculateScale = () => {
+                    const windowW = window.innerWidth;
+                    const windowH = window.innerHeight;
+                    
+                    // Calculate the scale factor to fit 1600x900 content plus margins into the window
+                    const scale = Math.min(
+                        windowW / contentW,
+                        windowH / (contentH + verticalMargin)
+                    );
+                    
+                    setScaleFactor(Math.max(0.1, scale)); // Ensure a minimum scale factor
+                };
+
+                calculateScale();
+                window.addEventListener('resize', calculateScale);
+
+                return () => window.removeEventListener('resize', calculateScale);
+            }, []);
+
 
             return (
-                <div className="min-h-screen bg-gray-900 font-sans text-gray-100 p-4 flex flex-col items-center">
+                <div className="min-h-screen bg-gray-900 font-sans text-gray-100 p-0 flex flex-col items-center justify-center">
                     
-                    {/* Header and Navigation */}
-                    <header className="w-full max-w-7xl mb-8">
-                        <h1 className="text-4xl font-black text-center text-white p-4">
-                            <span className="text-emerald-400">Flight Sim</span> Score Tracker
-                        </h1>
-                        <div className="flex justify-center space-x-4">
-                            <button
-                                onClick={() => setView('leaderboard')}
-                                className={`px-6 py-2 rounded-full font-semibold transition duration-200 ${
-                                    view === 'leaderboard'
-                                        ? 'bg-emerald-600 text-white shadow-lg'
-                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                }`}
-                            >
-                                Leaderboards Overview
-                            </button>
-                            <button
-                                onClick={() => setView('admin')}
-                                className={`px-6 py-2 rounded-full font-semibold transition duration-200 ${
-                                    view === 'admin'
-                                        ? 'bg-blue-600 text-white shadow-lg'
-                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                }`}
-                            >
-                                Admin Panel (Secured)
-                            </button>
+                    {/* Main Content Wrapper - applies the 16:9 scaling */}
+                    <div 
+                        className="relative" 
+                        style={{
+                            width: '1600px', // Base content width (16)
+                            height: '900px', // Base content height (9)
+                            transform: `scale(${scaleFactor})`,
+                            transformOrigin: 'top center',
+                            overflow: 'hidden',
+                            // Add padding to ensure header/footer stay within the scaled container
+                            padding: '20px', 
+                            boxSizing: 'content-box',
+                            flexShrink: 0
+                        }}
+                    >
+                        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center">
+                            
+                            {/* Header and Navigation (now part of the scaled container) */}
+                            <header className="w-full max-w-7xl mb-8">
+                                <h1 className="text-4xl font-black text-center text-white p-4">
+                                    <span className="text-emerald-400">Flight Sim</span> Score Tracker
+                                </h1>
+                                <div className="flex justify-center space-x-4">
+                                    <button
+                                        onClick={() => setView('leaderboard')}
+                                        className={`px-6 py-2 rounded-full font-semibold transition duration-200 ${
+                                            view === 'leaderboard'
+                                                ? 'bg-emerald-600 text-white shadow-lg'
+                                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                    >
+                                        Leaderboards Overview
+                                    </button>
+                                    <button
+                                        onClick={() => setView('admin')}
+                                        className={`px-6 py-2 rounded-full font-semibold transition duration-200 ${
+                                            view === 'admin'
+                                                ? 'bg-blue-600 text-white shadow-lg'
+                                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                    >
+                                        Admin Panel (Secured)
+                                    </button>
+                                </div>
+                            </header>
+                            
+                            {/* Main Content (Also scaled) */}
+                            <main className="w-full flex justify-center flex-grow">
+                                {/* Display error message if configuration is missing */}
+                                {firebaseConfig.projectId.includes("REPLACE_WITH") ? (
+                                    <LeaderboardsView students={[]} scores={[]} challenges={[]} loading={true} />
+                                ) : loading ? (
+                                    <LoadingSpinner />
+                                ) : (
+                                    view === 'leaderboard' ? (
+                                        <LeaderboardsView
+                                            students={students}
+                                            scores={scores}
+                                            challenges={challenges}
+                                            loading={dataLoading}
+                                        />
+                                    ) : (
+                                        <AdminView 
+                                            db={db} 
+                                            userId={userId} 
+                                            students={students} 
+                                            challenges={challenges} 
+                                            loading={dataLoading} 
+                                        />
+                                    )
+                                )}
+                            </main>
+
+                            {/* Footer / Debug Info (now part of scaled container) */}
+                            <footer className="mt-8 text-center text-xs text-gray-500 max-w-7xl">
+                                <p>App ID: {appId}</p>
+                                <p>Current User ID: {userId || 'Authenticating...'}</p>
+                            </footer>
                         </div>
-                    </header>
-
-                    {/* Main Content */}
-                    <main className="w-full flex justify-center">
-                        {/* Display error message if configuration is missing */}
-                        {!loading && firebaseConfig.projectId.includes("REPLACE_WITH") ? (
-                            <LeaderboardsView students={[]} scores={[]} challenges={[]} loading={true} /> // Renders the config error box
-                        ) : loading ? (
-                            <LoadingSpinner />
-                        ) : (
-                            view === 'leaderboard' ? (
-                                <LeaderboardsView
-                                    students={students}
-                                    scores={scores}
-                                    challenges={challenges}
-                                    loading={dataLoading}
-                                />
-                            ) : (
-                                <AdminView 
-                                    db={db} 
-                                    userId={userId} 
-                                    students={students} 
-                                    challenges={challenges} 
-                                    loading={dataLoading} 
-                                />
-                            )
-                        )}
-                    </main>
-
-                    {/* Footer / Debug Info */}
-                    <footer className="mt-8 text-center text-xs text-gray-500 max-w-7xl">
-                        <p>App ID: {appId}</p>
-                        <p>Current User ID: {userId || 'Authenticating...'}</p>
-                    </footer>
+                    </div>
                 </div>
             );
         };
