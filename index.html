@@ -54,7 +54,7 @@
         const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, collection, onSnapshot, addDoc, serverTimestamp } = window.fbs || {};
 
         // ===================================================================
-        // VITAL: REAL FIREBASE CONFIGURATION (REPLACED PLACEHOLDERS)
+        // VITAL: REAL FIREBASE CONFIGURATION
         // ===================================================================
         let firebaseConfig = {
             apiKey: "AIzaSyAK1umts0wkVAkCWqtQ_04DQcto78jbZaE", 
@@ -74,9 +74,7 @@
             initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         }
         
-        // CRITICAL: Admin User ID
-        // ONLY the user with this ID will be able to access the Admin Panel.
-        const ADMIN_UID = "7QmxyVpRYmPWmSNiBQtYRIit7wh1";
+        // NOTE: ADMIN_UID constant removed. Access is now controlled by a simple password check in AdminView.
 
         const COLLECTIONS = {
             STUDENTS: 'students',
@@ -372,6 +370,50 @@
             );
         };
 
+        {/* --- Admin Login Component (Password Check) --- */}
+        const AdminLogin = ({ onLogin }) => {
+            const ADMIN_PASSWORD = "AngleofAttack";
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (password === ADMIN_PASSWORD) {
+                    onLogin(true);
+                    setError('');
+                } else {
+                    setError('Incorrect password. Access denied.');
+                    setPassword('');
+                }
+            };
+
+            return (
+                <div className="w-full max-w-md p-8 bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-2xl text-white space-y-6">
+                    <h2 className="text-3xl font-extrabold text-blue-400 text-center">Admin Login</h2>
+                    <p className="text-gray-400 text-center">Enter the administrator password to access management tools. (Password: **AngleofAttack**)</p>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full p-4 rounded-md bg-gray-700 border border-gray-600 focus:ring-blue-500 focus:border-blue-500 text-white"
+                            required
+                        />
+                        {error && <p className="text-red-400 text-center text-sm">{error}</p>}
+                        <button
+                            type="submit"
+                            className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md transition duration-150 shadow-md"
+                        >
+                            Log In
+                        </button>
+                    </form>
+                </div>
+            );
+        };
+        {/* --- End Admin Login Component --- */}
+
+
         // --- Admin Content (The actual forms and logic - Modular V9/V11) ---
         const AdminViewContent = ({ db, userId, students, challenges, loading }) => {
             // State for forms
@@ -484,7 +526,7 @@
             return (
                 <div className="w-full max-w-4xl p-4 md:p-8 bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-2xl text-white space-y-8">
                     <h2 className="text-3xl font-extrabold text-blue-400 border-b border-blue-500/50 pb-2 flex items-center">
-                        <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.222.08 2.573-1.066z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.222.08 2.573-1.066z"></path><path strokeLinecap="round" strokeLinecap="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         Admin Panel - Tools
                     </h2>
 
@@ -634,11 +676,11 @@
             );
         };
 
-        // --- Admin Access Control (Simplified) ---
+        {/* --- Admin View (Password Check Gate) --- */}
         const AdminView = (props) => {
-            const { userId, loading } = props;
+            const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
 
-            // Check if Firebase config is still using placeholders
+            // Check for Firebase config placeholder first
             if (firebaseConfig.projectId.includes("REPLACE_WITH")) {
                 return (
                     <div className="w-full max-w-md p-8 bg-red-900/50 backdrop-blur-sm rounded-xl shadow-2xl text-white space-y-6">
@@ -650,21 +692,14 @@
                 );
             }
 
-            // Check if the current user ID matches the defined Admin UID
-            if (userId !== ADMIN_UID) {
-                return (
-                    <div className="w-full max-w-md p-8 bg-red-900/50 backdrop-blur-sm rounded-xl shadow-2xl text-white space-y-6">
-                        <h2 className="text-3xl font-extrabold text-red-300 text-center">Admin Access Denied</h2>
-                        <p className="text-gray-300 text-center">
-                            This panel is restricted. Your current User ID does not match the Admin ID in the code.
-                        </p>
-                    </div>
-                );
+            if (!isAdminLoggedIn) {
+                return <AdminLogin onLogin={setIsAdminLoggedIn} />;
             }
-
-            // If authenticated and authorized, show the content.
+            
+            // If logged in, show the content.
             return <AdminViewContent {...props} />;
         };
+        {/* --- End Admin View --- */}
 
 
         const App = () => {
