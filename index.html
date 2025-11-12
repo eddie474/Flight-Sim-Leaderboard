@@ -53,14 +53,16 @@
         const { useState, useEffect, useMemo } = React;
         const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, collection, onSnapshot, addDoc, serverTimestamp } = window.fbs || {};
 
-        // Configuration setup - prioritize environment variables
+        // ===================================================================
+        // VITAL: REAL FIREBASE CONFIGURATION (REPLACED PLACEHOLDERS)
+        // ===================================================================
         let firebaseConfig = {
-            apiKey: "REPLACE_WITH_YOUR_API_KEY", 
-            authDomain: "REPLACE_WITH_YOUR_AUTH_DOMAIN",
-            projectId: "REPLACE_WITH_YOUR_PROJECT_ID",
-            storageBucket: "REPLACE_WITH_YOUR_STORAGE_BUCKET",
-            messagingSenderId: "REPLACE_WITH_YOUR_MESSAGING_SENDER_ID",
-            appId: "REPLACE_WITH_YOUR_APP_ID"
+            apiKey: "AIzaSyAK1umts0wkVAkCWqtQ_04DQcto78jbZaE", 
+            authDomain: "flight-sim-leaderboard.firebaseapp.com",
+            projectId: "flight-sim-leaderboard",
+            storageBucket: "flight-sim-leaderboard.firebasestorage.app",
+            messagingSenderId: "1045910945297",
+            appId: "1:1045910945297:web:39417042ebdf9eda0bbbb0"
         };
         let appId = 'flightsim-leaderboard-public';
         let initialAuthToken = null;
@@ -72,7 +74,8 @@
             initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         }
         
-        // CRITICAL: Replace this with YOUR user ID (found in the footer when you load the app)
+        // CRITICAL: Admin User ID
+        // ONLY the user with this ID will be able to access the Admin Panel.
         const ADMIN_UID = "7QmxyVpRYmPWmSNiBQtYRIit7wh1";
 
         const COLLECTIONS = {
@@ -80,6 +83,9 @@
             SCORES: 'scores',
             CHALLENGES: 'challenges',
         };
+        // ===================================================================
+        // END VITAL CONFIGURATION BLOCK
+        // ===================================================================
 
         const CATEGORIES = [
             { id: 'gt1', name: 'Ground Trainer 1', description: 'Focuses on core landing skills.' },
@@ -113,7 +119,9 @@
                     return;
                 }
 
+                // Check for placeholder config before initializing
                 if (!firebaseConfig.projectId || firebaseConfig.projectId.includes("REPLACE_WITH")) {
+                    console.error("Firebase Config Error: Placeholder values detected.");
                     setIsAuthReady(true); 
                     return;
                 }
