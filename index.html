@@ -14,7 +14,7 @@
     <!-- Custom Styles for Inter Font and Background -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0d1117; }
+        body { font-family: 'Inter', sans-serif; background-color: black; }
         #root {
             display: flex;
             min-height: 100vh;
@@ -352,7 +352,7 @@
                 // Adjusted max-width to scale up to 3000px wide for large screens
                 <div className="w-full xl:max-w-[3000px] p-4 md:p-8 bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-2xl">
                     <h2 className="text-3xl font-extrabold mb-8 text-emerald-400 border-b border-emerald-500/50 pb-2 flex items-center justify-center">
-                        <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19V6l12-3v14M9 19a2 2 0 002 2h2a2 2 0 002-2M9 19c0 1.105.9 2 2 2h2c1.105 0 2-.895 2-2M9 19v-6M15 19v-6"></path></svg>
+
                         Ground Trainer Leaderboards Overview
                     </h2>
 
@@ -558,7 +558,7 @@
                 // Admin Panel uses a large max-width for better use of screen space
                 <div className="w-full xl:max-w-[2000px] p-4 md:p-8 bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-2xl text-white space-y-8">
                     <h2 className="text-3xl font-extrabold text-blue-400 border-b border-blue-500/50 pb-2 flex items-center">
-                        <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.222.08 2.573-1.066z"></path><path strokeLinecap="round" strokeLinecap="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.222.08 2.573-1.066z"></path><path strokeLinecap="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         Admin Panel - Tools
                     </h2>
 
@@ -783,7 +783,7 @@
             const loading = !isAuthReady || dataLoading;
 
             return (
-                <div className="min-h-screen bg-gray-900 font-sans text-gray-100 p-4 flex flex-col items-center">
+                <div className="min-h-screen  font-sans text-gray-100 p-4 flex flex-col items-center">
 
                     {/* Header and Navigation */}
                     <header className="w-full xl:max-w-[3000px] mb-8">
