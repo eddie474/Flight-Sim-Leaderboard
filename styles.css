@@ -1,0 +1,139 @@
+/* General layout */
+body {
+    background-color: #0d1117;
+    color: #e6edf3;
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+  
+  .highlight {
+    color: #00ff99;
+  }
+  
+  .nav-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+  }
+  
+  button {
+    background-color: #1f2937;
+    color: #e6edf3;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 20px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  button.active {
+    background-color: #00b368;
+  }
+  
+  button:hover {
+    background-color: #00b368;
+  }
+  
+  /* Main Section */
+  main h2 {
+    text-align: center;
+    color: #00ff99;
+    margin-bottom: 2rem;
+  }
+  
+  /* Leaderboards Layout */
+  .leaderboards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    justify-content: center;
+  }
+  
+  .card {
+    background-color: #161b22;
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    width: 480px;
+    box-shadow: 0 0 10px rgba(0, 255, 153, 0.1);
+  }
+  
+  .card h3 {
+    margin-top: 0;
+    color: #00ff99;
+  }
+  
+  .subtitle {
+    color: #9da5b4;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* Table Styles */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+  }
+  
+  thead {
+    color: #9da5b4;
+    font-size: 0.9rem;
+  }
+  
+  th, td {
+    padding: 0.6rem;
+    text-align: left;
+  }
+  
+  tbody tr {
+    border-radius: 8px;
+  }
+  
+  tbody tr:nth-child(even) {
+    background-color: #1e2530;
+  }
+  
+  .rank-1 {
+    background-color: rgba(0, 255, 153, 0.1);
+    color: #00ff99;
+  }
+  
+  .rank-2 {
+    background-color: rgba(50, 60, 80, 0.4);
+    color: #b0b8c3;
+  }
+  
+  .empty td {
+    text-align: center;
+    color: #8b949e;
+    font-style: italic;
+  }
+  
+  /* Footer */
+  .footer {
+    font-size: 0.85rem;
+    color: #6c737d;
+    border-top: 1px solid #2a2f3a;
+    padding-top: 0.5rem;
+  }
+  
